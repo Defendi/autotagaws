@@ -104,6 +104,10 @@ if __name__ == "__main__":
     # Inicializa a sessão boto3 usando as credenciais do arquivo .env
     session = initialize_session()
     
+    print(f"AWS_ACCESS_KEY_ID = {AWS_ACCESS_KEY_ID}")
+    print(f"AWS_SECRET_ACCESS_KEY = {AWS_SECRET_ACCESS_KEY}")
+    print(f"AWS_REGION = {AWS_REGION}")
+    
     if session:
         print("Listando recursos e verificando tags na região especificada...")
         list_resources_and_check_tags(session)

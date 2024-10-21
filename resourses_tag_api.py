@@ -44,7 +44,7 @@ def get_resource(session, arn):
             Description = cert['Certificate'].get('DomainName', 'Descrição indisponível')
         else:
             print(f"Recurso desconhecido:\n[{arn}]\n")
-        return re.sub(r'[^a-zA-Z0-9]', '', Description)
+        return re.sub(r'[^a-zA-Z0-9._]', '', Description)
     except ClientError as e:
         print(f"Erro ao descrever o recurso {arn}: {e}\n")
         return False

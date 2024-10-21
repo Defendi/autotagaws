@@ -1,5 +1,7 @@
 import os
 import boto3
+import keyboard
+
 from dotenv import load_dotenv
 from botocore.exceptions import NoCredentialsError, ClientError
 
@@ -68,6 +70,10 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
+                print(f"Vai iniciar o recurso com ARN {resource_arn}.")
+                keyboard.read_event()
+
+                
                 tags = resource.get('Tags', [])
 
                 # Verifica se o recurso tem a tag 'revisao' com o valor 'false'
@@ -75,16 +81,17 @@ def list_resources_and_check_tags(session):
 
                 if tag_revisao:
                     print(f"Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'false'.")
-
                     # Verificar se a tag 'Nome' já existe
                     tag_nome = next((tag for tag in tags if tag['Key'] == 'Nome'), None)
 
                     if not tag_nome:
                         # Tentar descrever o recurso se não houver a tag 'Nome'
+                        print(f"Tenta ler o corpo do recurso ARN {resource_arn}.")
                         resource_name = describe_resource(acm_client, resource_arn)
 
                         if resource_name:
                             # Adicionar a tag 'Nome' ao recurso
+                            print(f"Tenta adicionar a tag 'Nome' ao recurso ARN {resource_arn}.")
                             add_name_tag(resource_arn, resource_name, tagging_client)
                     else:
                         print(f"O recurso {resource_arn} já possui a tag 'Nome'.")

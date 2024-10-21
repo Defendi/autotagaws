@@ -5,6 +5,7 @@ import keyboard
 
 from dotenv import load_dotenv
 from botocore.exceptions import NoCredentialsError, ClientError
+from pickle import TRUE
 
 # Carregar as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -58,7 +59,13 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
             ResourceARNList=[resource_arn],
             Tags={'Name': resource_name}
         )
-        print(f"Resultado ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
+        fail = res.get('FailedResourcesMap',False)
+        if not bool(fail):
+            print(f"Adicionou a Tag 'Name' ao recurso ARN {resource_arn}\n")
+            return True
+        else:
+            print(f"Falhou ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
+            return False
     except ClientError as e:
         print(f"Erro ao adicionar tag 'Nome' ao recurso {resource_arn}: {e}\n")
 

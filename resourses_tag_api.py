@@ -28,19 +28,24 @@ def initialize_session():
         print(f"Erro ao carregar credenciais da AWS: {e}")
         return None
 
-def describe_resource(acm_client, resource_arn):
+def get_acm(session,arn):
+    client = session.client('acm')  # Cliente para descrever certificados
+    return client.describe_certificate(CertificateArn=arn)
+
+def get_resource(session, arn):
     """
     Tenta descrever o recurso com base no ARN. Exemplo: EC2, ACM, etc.
     """
     try:
-        if 'acm' in resource_arn:
-            cert = acm_client.describe_certificate(CertificateArn=resource_arn)
+        if 'acm' in arn:
+            cert = get_acm(session, arn)
             return cert['Certificate'].get('DomainName', 'Descrição indisponível')
-        # Aqui você pode adicionar mais descrições para outros tipos de recursos.
-        return "Descrição desconhecida"
+        else:
+            print(f"Recurso desconhecido:\n[{arn}]")
+        return False
     except ClientError as e:
-        print(f"Erro ao descrever o recurso {resource_arn}: {e}")
-        return None
+        print(f"Erro ao descrever o recurso {arn}: {e}")
+        return False
 
 def add_name_tag(resource_arn, resource_name, tagging_client):
     """
@@ -63,7 +68,6 @@ def list_resources_and_check_tags(session):
     try:
         # Inicializar o cliente resourcegroupstaggingapi para listar os recursos com tags
         tagging_client = session.client('resourcegroupstaggingapi')
-        acm_client = session.client('acm')  # Cliente para descrever certificados
 
         paginator = tagging_client.get_paginator('get_resources')
 
@@ -72,7 +76,7 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
-                print(f"Vai iniciar o recurso:\n ***{resource}***.")
+                print(f"Vai iniciar o recurso:\n [{resource_arn}].")
                 keyboard.read_event()
 
                 # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
@@ -92,13 +96,22 @@ def list_resources_and_check_tags(session):
 
                     if not tag_nome:
                         # Tentar descrever o recurso se não houver a tag 'Nome'
-                        print(f"Tenta ler o corpo do recurso ARN {resource_arn}.")
-                        resource_name = describe_resource(acm_client, resource_arn)
-
+                        resource_name = get_resource(session, resource_arn)
+                        
                         if resource_name:
                             # Adicionar a tag 'Nome' ao recurso
+                            print(f"Nome do recurso ARN {resource_name}.")
                             print(f"Tenta adicionar a tag 'Nome' ao recurso ARN {resource_arn}.")
                             add_name_tag(resource_arn, resource_name, tagging_client)
+                        else:
+                            entrada = input("Não foi possível adicionar um nome.\n"
+                                            "Digite um nome, vazio para próximo ou\n"
+                                            "'sair' para encerrear: ")
+                            if bool(entrada):
+                                if entrada.lower() == 'sair':
+                                    return False
+                                else:
+                                    add_name_tag(resource_arn, entrada, tagging_client)
                     else:
                         print(f"O recurso {resource_arn} já possui a tag 'Nome'.")
                 else:

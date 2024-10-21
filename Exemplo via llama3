@@ -1,0 +1,161 @@
+...  recurso.
+Que desafio divertido!
+
+Aqui está um exemplo de script em Python usando a biblioteca `boto3` para listar recursos na sua infraestrutura AWS e adicionar a tag "Name" com descrição para cada recurso:
+
+```python
+import boto3
+
+def lista_recursos_aws(regiao, region_name):
+    # Inicializa o cliente EC2
+    ec2 = boto3.client('ec2', aws_access_key_id='SEU_ACESSO_KEY',
+                      aws_secret_access_key='SUA_SENHA_SECRET',
+                      region_name=region_name)
+
+    # Inicializa o cliente CloudFormation
+    cloudformation = boto3.client('cloudformation', aws_access_key_id='SEU_ACESSO_KEY',
+                                  aws_secret_access_key='SUA_SENHA_SECRET',
+                                  region_name=region_name)
+
+    # Inicializa o cliente RDS
+    rds = boto3.client('rds', aws_access_key_id='SEU_ACESSO_KEY',
+                      aws_secret_access_key='SUA_SENHA_SECRET',
+                      region_name=region_name)
+
+    # Listar recursos EC2
+    response_ec2 = ec2.describe_instances()
+    for reservation in response_ec2['Reservations']:
+        for instance in reservation['Instances']:
+            print(f"EC2: {instance['InstanceId']} - {instance['KeyName']}")
+            ec2.add_tag(Resource=instance['InstanceId'], Tag={
+                'Key': 'Name',
+                'Value': f'Máquina EC2 com ID {instance["InstanceId"]}'
+            })
+
+    # Listar recursos CloudFormation
+    response_cf = cloudformation.describe_stacks()
+    for stack in response_cf['Stacks']:
+        print(f"CloudFormation: {stack['StackId']} - {stack['Tags'][0]['Key']}")
+        cloudformation.add_tags(StackName=stack['StackId'], Tags=[
+            {'Key': 'Name', 'Value': f'Monte de CloudFormation com ID {stack["StackId"]}'}
+        ])
+
+    # Listar recursos RDS
+    response_rds = rds.describe_db_instances()
+    for instance in response_rds['DBInstances']:
+        print(f"RDS: {instance['DBInstanceIdentifier']} - {instance['MasterUsername']}")
+        rds.add_tags(Resource=instance['DBInstanceArn'], Tags=[
+            {'Key': 'Name', 'Value': f'Instância RDS com ID {instance["DBInstanceIdentifier"]}'}
+        ])
+
+if __name__ == '__main__':
+    regiao = 'sa-east-1'
+    region_name = 'South America (São Paulo)'
+    lista_recursos_aws(regiao, region_name)
+```
+
+Esse script utiliza a biblioteca `boto3` para acessar os serviços EC2, CloudFormation e RDS na sua infraestrutura AWS. Ele lista todos os recursos em cada serviço e adiciona uma tag com o nome "Name" e valor descrevendo cada 
+recurso.
+
+**Nota:** Certifique-se de substituir as variáveis `SEU_ACESSO_KEY` e `SUA_SENHA_SECRET` pelas suas credenciais reais da AWS. Além disso, ajuste a região (`regiao`) para a sua conta AWS.
+
+**Observação:** Esse script não é uma solução otimizada e pode ser melhorado. Por exemplo, você pode usar um único cliente `boto3` em vez de três clientes separados.
+
+>>> 
+>>> Você é um programador exeperiente em python e usuário avançado de infraestrutura na AWS. Crie um script para listar na minha infraestrutura por recursos, usando o cliente "boto3" e apenas um cliente. Sendo que ao listar cada recurso a
+... dicionar uma tag com o nome "Name" e valor "Descrição do recurso.
+Que desafio divertido!
+
+Aqui está um exemplo de script em Python usando a biblioteca `boto3` para listar recursos na sua infraestrutura AWS, adicionando uma tag com o nome "Name" e valor descrevendo cada recurso:
+
+```python
+import boto3
+
+def lista_recursos_aws(region_name):
+    # Inicializa um cliente único de serviço de recursos da AWS (Resource)
+    resource_client = boto3.client('resourcegroupstaggingapi', aws_access_key_id='SEU_ACESSO_KEY',
+                                    aws_secret_access_key='SUA_SENHA_SECRET',
+                                    region_name=region_name)
+
+    # Listar todos os recursos na sua infraestrutura
+    response = resource_client.get_resources()
+    for resource in response['ResourceTagMappingList']:
+        print(f"Recurso: {resource['ResourceARN']} - {resource['Tags'][0]['Key']}")
+        
+        # Adicionar uma tag com o nome "Name" e valor descrevendo cada recurso
+        resource_client.add_tags_to_resource(ResourceArn=resource['ResourceARN'], Tags=[
+            {'Key': 'Name', 'Value': f'Descricao do {resource["ResourceARN"]}'}
+        ])
+
+if __name__ == '__main__':
+    region_name = 'sa-east-1'
+    lista_recursos_aws(region_name)
+```
+
+Esse script utiliza a biblioteca `boto3` para acessar o serviço de recursos da AWS (ResourceGroupstaggingAPI) e listar todos os recursos na sua infraestrutura. Além disso, adiciona uma tag com o nome "Name" e valor descrevendo cada 
+recurso.
+
+**Nota:** Certifique-se de substituir as variáveis `SEU_ACESSO_KEY` e `SUA_SENHA_SECRET` pelas suas credenciais reais da AWS. Além disso, ajuste a região (`region_name`) para a sua conta AWS.
+
+**Observação:** Esse script é uma solução mais eficiente em comparação com o anterior, pois utiliza apenas um cliente de serviço de recursos da AWS (ResourceGroupstaggingAPI).
+
+>>> Você é um programador exeperiente em python e usuário avançado de infraestrutura na AWS. Crie um script para listar na minha infraestrutura por recursos, usando o cliente "boto3" e apenas um cliente. Sendo que ao listar cada recurso, 
+... faça uma verificação para ver se a tag "Name" existe, caso não exista adicionar uma tag com o nome "Name" e valor "Descrição do recurso.
+Que desafio divertido!
+
+Aqui está um exemplo de script em Python usando a biblioteca `boto3` para listar recursos na sua infraestrutura AWS e verificar se a tag "Name" existe. Se não existir, adiciona uma tag com o nome "Name" e valor descrevendo cada 
+recurso:
+
+```python
+import boto3
+
+def lista_recursos_aws(region_name):
+    # Inicializa um cliente EC2
+    ec2 = boto3.client('ec2', aws_access_key_id='SEU_ACESSO_KEY',
+                      aws_secret_access_key='SUA_SENHA_SECRET',
+                      region_name=region_name)
+
+    # Listar recursos EC2
+    response_ec2 = ec2.describe_instances()
+    for reservation in response_ec2['Reservations']:
+        for instance in reservation['Instances']:
+            print(f"EC2: {instance['InstanceId']} - {instance['KeyName']}")
+            
+            # Verificar se a tag "Name" existe
+            tags_ec2 = ec2.list_tags_for_resource(ResourceId=instance['InstanceId'])
+            if 'Tags' not in tags_ec2 or 'Name' not in [tag['Key'] for tag in tags_ec2['Tags']]:
+                # Adicionar uma tag com o nome "Name" e valor descrevendo cada recurso
+                ec2.create_tags(Resources=[instance['InstanceId']], Tags=[
+                    {'Key': 'Name', 'Value': f'Descricao do {instance["InstanceId"]} EC2'}
+                ])
+
+    # Inicializa um cliente RDS
+    rds = boto3.client('rds', aws_access_key_id='SEU_ACESSO_KEY',
+                      aws_secret_access_key='SUA_SENHA_SECRET',
+                      region_name=region_name)
+
+    # Listar recursos RDS
+    response_rds = rds.describe_db_instances()
+    for instance in response_rds['DBInstances']:
+        print(f"RDS: {instance['DBInstanceIdentifier']} - {instance['MasterUsername']}")
+        
+        # Verificar se a tag "Name" existe
+        tags_rds = rds.list_tags_for_resource(ResourceName=instance['DBInstanceArn'])
+        if 'Tags' not in tags_rds or 'Name' not in [tag['Key'] for tag in tags_rds['Tags']]:
+            # Adicionar uma tag com o nome "Name" e valor descrevendo cada recurso
+            rds.add_tags_to_resource(ResourceName=instance['DBInstanceArn'], Tags=[
+                {'Key': 'Name', 'Value': f'Descricao do {instance["DBInstanceIdentifier"]} RDS'}
+            ])
+
+if __name__ == '__main__':
+    region_name = 'sa-east-1'
+    lista_recursos_aws(region_name)
+```
+
+Esse script utiliza a biblioteca `boto3` para acessar os clientes EC2 e RDS da AWS, listar todos os recursos e verificar se a tag "Name" existe. Se não existir, adiciona uma tag com o nome "Name" e valor descrevendo cada recurso.
+
+**Nota:** Certifique-se de substituir as variáveis `SEU_ACESSO_KEY` e `SUA_SENHA_SECRET` pelas suas credenciais reais da AWS. Além disso, ajuste a região (`region_name`) para a sua conta AWS.
+
+**Observação:** Esse script é uma solução mais eficiente em comparação com os anteriores, pois verifica se a tag "Name" existe antes de adicionar uma nova tag e utiliza apenas um cliente por recurso.
+
+

@@ -52,11 +52,11 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
     Adiciona a tag "Nome" ao recurso com a descrição fornecida.
     """
     try:
-        tagging_client.tag_resources(
+        res = tagging_client.tag_resources(
             ResourceARNList=[resource_arn],
-            Tags={'Nome': resource_name}
+            Tags={'Name': resource_name}
         )
-        print(f"Tag 'Nome' adicionada ao recurso: {resource_arn} com o valor '{resource_name}'\n")
+        print(f"Resultado ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
     except ClientError as e:
         print(f"Erro ao adicionar tag 'Nome' ao recurso {resource_arn}: {e}\n")
 

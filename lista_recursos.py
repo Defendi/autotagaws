@@ -14,7 +14,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_SESSION_TOKEN = os.getenv('AWS_SESSION_TOKEN')
 AWS_REGION = os.getenv('AWS_REGION')
 
-def initialize_session(profile_name):
+def initialize_session():
     """
     Inicializa uma sessão boto3 com base no perfil especificado.
     """

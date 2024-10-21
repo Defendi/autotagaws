@@ -104,142 +104,83 @@ def manage_tag_arn(client, resource_arn, resource_type, tag_key, tag_value):
     except (ClientError, NoCredentialsError) as e:
         print(f"Erro ao gerenciar a tag do {resource_type} ({resource_arn}): {e}")
 
-def list_and_tag_ec2_instances(session):
+def get_resource(session, arn):
     """
-    Lista e verifica as tags das instâncias EC2, adicionando a tag 'Name' quando necessário.
+    Tenta descrever o recurso com base no ARN. Exemplo: EC2, ACM, etc.
     """
-    ec2 = session.client('ec2')
-    instances = ec2.describe_instances()
-    
-    for reservation in instances['Reservations']:
-        for instance in reservation['Instances']:
-            instance_id = instance['InstanceId']
-            instance_arn = f"arn:aws:ec2:{session.region_name}:{instance['OwnerId']}:instance/{instance_id}"
-            manage_tag_arn(session.client('resourcegroupstaggingapi'), instance_arn, 'Instância EC2', 'Descrição da instância EC2')
+    try:
+        if 'acm' in arn:
+            client = session.client('acm')  # Cliente para descrever certificados
+            cert = client.describe_certificate(CertificateArn=arn)
+            return client, cert['Certificate'].get('DomainName', 'Descrição indisponível'), 'acm'
+        else:
+            print(f"Recurso desconhecido:\n[{arn}]\n")
+        return False, False, False
+    except ClientError as e:
+        print(f"Erro ao descrever o recurso {arn}: {e}\n")
+        return False, False, False
 
-def list_and_tag_s3_buckets(session):
-    """
-    Lista e verifica as tags dos buckets S3, adicionando a tag 'Name' quando necessário.
-    """
-    s3 = session.client('s3')
-    buckets = s3.list_buckets()
 
-    for bucket in buckets['Buckets']:
-        bucket_name = bucket['Name']
-        bucket_arn = f"arn:aws:s3:::{bucket_name}"
-        manage_tag_arn(session.client('resourcegroupstaggingapi'), bucket_arn, 'Bucket S3', 'Name', 'Descrição do bucket S3')
-
-def list_and_tag_ebs_volumes(session):
+def list_resources_and_check_tags(session):
     """
-    Lista e verifica as tags dos volumes EBS, adicionando a tag 'Name' quando necessário.
+    Lista todos os recursos da região e verifica as tags.
+    Se encontrar a tag 'revisao' com o valor 'false', adiciona a tag 'Nome' se não existir.
     """
-    ec2 = session.client('ec2')
-    volumes = ec2.describe_volumes()
+    try:
+        # Inicializar o cliente resourcegroupstaggingapi para listar os recursos com tags
+        tagging_client = session.client('resourcegroupstaggingapi')
 
-    for volume in volumes['Volumes']:
-        volume_id = volume['VolumeId']
-        volume_arn = f"arn:aws:ec2:{session.region_name}:{volume['OwnerId']}:volume/{volume_id}"
-        manage_tag_arn(session.client('resourcegroupstaggingapi'), volume_arn, 'Volume EBS', 'Name', 'Descrição do volume EBS')
+        paginator = tagging_client.get_paginator('get_resources')
 
-def list_and_tag_rds_instances(session):
-    """
-    Lista e verifica as tags das instâncias RDS, adicionando a tag 'Name' quando necessário.
-    """
-    rds = session.client('rds')
-    instances = rds.describe_db_instances()
+        for page in paginator.paginate():
+            resource_tag_mappings = page['ResourceTagMappingList']
 
-    for db_instance in instances['DBInstances']:
-        db_instance_arn = db_instance['DBInstanceArn']
-        manage_tag_arn(session.client('resourcegroupstaggingapi'), db_instance_arn, 'Instância RDS', 'Name', 'Descrição da instância RDS')
+            for resource in resource_tag_mappings:
+                resource_arn = resource.get('ResourceARN')
+                print(f"* Vai iniciar o recurso:\n [{resource_arn}].")
+                keyboard.read_event()
 
-def list_and_tag_lambda_functions(session):
-    """
-    Lista e verifica as tags das funções Lambda, adicionando a tag 'Name' quando necessário.
-    """
-    lambda_client = session.client('lambda')
-    functions = lambda_client.list_functions()
+                # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
+                if keyboard.is_pressed('esc'):
+                    print("< Encerrando o programa.")
+                    return False
+                
+                tags = resource.get('Tags', [])
 
-    for function in functions['Functions']:
-        function_arn = function['FunctionArn']
-        manage_tag_arn(session.client('resourcegroupstaggingapi'), function_arn, 'Função Lambda', 'Name', 'Descrição da função Lambda')
+                # Verifica se o recurso tem a tag 'revisao' com o valor 'false'
+                tag_revisao = next((tag for tag in tags if tag['Key'] == 'revisao' and tag['Value'] == 'false'), None)
 
-def list_and_tag_cloudwatch_alarms(session):
-    """
-    Lista e verifica as tags dos alarmes do CloudWatch, adicionando a tag 'Name' quando necessário.
-    """
-    cloudwatch = session.client('cloudwatch')
-    alarms = cloudwatch.describe_alarms()
+                if tag_revisao:
+                    print(f"   1) Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'false'.\n")
+                    # Verificar se a tag 'Nome' já existe
+                    tag_nome = next((tag for tag in tags if tag['Key'] == 'Name'), None)
 
-    for alarm in alarms['MetricAlarms']:
-        alarm_name = alarm['AlarmName']
-        alarm_arn = f"arn:aws:cloudwatch:{region}:{session.client('sts').get_caller_identity()['Account']}:alarm:{alarm_name}"
-        manage_tag_arn(session.client('resourcegroupstaggingapi'), alarm_arn, 'Alarme CloudWatch', 'Name', f'{alarm_name}')
-
-def list_and_tag_dhcp_options(session):
-    """
-    Lista e verifica as tags dos EC2 DHCPOptions, adicionando a tag 'Name' quando necessário.
-    """
-    ec2 = session.client('ec2')
-    dhcp_options = ec2.describe_dhcp_options()
-
-    for dhcp_option in dhcp_options['DhcpOptions']:
-        dhcp_option_id = dhcp_option['DhcpOptionsId']
-        manage_tag_arn(ec2, dhcp_option_id, 'DHCPOptions', 'Name', 'Descrição do DHCPOptions')
-
-def list_and_tag_images(session):
-    """
-    Lista e verifica as tags das EC2 Images (AMIs), adicionando a tag 'Name' quando necessário.
-    """
-    ec2 = session.client('ec2')
-    images = ec2.describe_images(Owners=['self'])
-
-    for image in images['Images']:
-        image_id = image['ImageId']
-        manage_tag_id(ec2, image_id, 'Imagem EC2 (AMI)', 'Name', image.get('name','Backup'))
-
-def list_and_tag_internet_gateways(session):
-    """
-    Lista e verifica as tags dos EC2 InternetGateways, adicionando a tag 'Name' quando necessário.
-    """
-    ec2 = session.client('ec2')
-    internet_gateways = ec2.describe_internet_gateways()
-
-    for gateway in internet_gateways['InternetGateways']:
-        gateway_id = gateway['InternetGatewayId']
-        manage_tag_id(ec2, gateway_id, 'InternetGateway', 'Name', 'Descrição do InternetGateway')
-
+                    if not tag_nome:
+                        # Tentar descrever o recurso se não houver a tag 'Nome'
+                        client, resource_name, resource_type = get_resource(session, resource_arn)
+                        
+                        if resource_name:
+                            # Adicionar a tag 'Nome' ao recurso
+                            print(f"   2) Tenta adicionar a tag 'Nome' ao recurso ARN {resource_arn}.\n")
+                            manage_tag_arn(client, resource_arn, resource_type, 'Name', resource_name)
+                        else:
+                            print(f"   3) Não foi possível adicionar um nome ao recurso ARN {resource_arn}.\n")
+                    else:
+                        print(f"O recurso {resource_arn} já possui a tag 'Nome'.")
+                else:
+                    print(f"O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.\n")
+    except (ClientError, NoCredentialsError) as e:
+        print(f"Erro ao listar os recursos: {e}\n")
 
 if __name__ == "__main__":
-    # Perfil específico fornecido pelo usuário
-    profile_name = "900655431634_Analistas-linux-mkt"
+    # Inicializa a sessão boto3 usando as credenciais do arquivo .env
+    session = initialize_session()
     
-    session = initialize_session(profile_name)
+    print(f"AWS_ACCESS_KEY_ID = {AWS_ACCESS_KEY_ID}")
+    print(f"AWS_SECRET_ACCESS_KEY = {AWS_SECRET_ACCESS_KEY}")
+    print(f"AWS_SESSION_TOKEN = {AWS_SESSION_TOKEN}")
+    print(f"AWS_REGION = {AWS_REGION}")
     
     if session:
-        print("Iniciando a listagem e verificação de tags dos recursos...")
-
-        # EC2
-        # list_and_tag_ec2_instances(session)
-        
-        # S3
-        # list_and_tag_s3_buckets(session)
-        
-        # EBS
-        # list_and_tag_ebs_volumes(session)
-        
-        # RDS
-        # list_and_tag_rds_instances(session)
-        
-        # Lambda
-        # list_and_tag_lambda_functions(session)
-
-        # cloudwatch
-        # list_and_tag_cloudwatch_alarms(session)
-
-        # list_and_tag_dhcp_options(session)
-        
-        list_and_tag_images(session)
-
-        # list_and_tag_internet_gateways(session)
-        
-        print("Processo de verificação e tagueamento concluído.")
+        print("Listando recursos e verificando tags na região especificada...")
+        list_resources_and_check_tags(session)

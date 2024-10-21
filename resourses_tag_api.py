@@ -25,7 +25,7 @@ def initialize_session():
         )
         return session
     except NoCredentialsError as e:
-        print(f"Erro ao carregar credenciais da AWS: {e}")
+        print(f"Erro ao carregar credenciais da AWS: {e}\n")
         return None
 
 def get_acm(session,arn):
@@ -41,10 +41,10 @@ def get_resource(session, arn):
             cert = get_acm(session, arn)
             return cert['Certificate'].get('DomainName', 'Descrição indisponível')
         else:
-            print(f"Recurso desconhecido:\n[{arn}]")
+            print(f"Recurso desconhecido:\n[{arn}]\n")
         return False
     except ClientError as e:
-        print(f"Erro ao descrever o recurso {arn}: {e}")
+        print(f"Erro ao descrever o recurso {arn}: {e}\n")
         return False
 
 def add_name_tag(resource_arn, resource_name, tagging_client):
@@ -56,9 +56,9 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
             ResourceARNList=[resource_arn],
             Tags={'Nome': resource_name}
         )
-        print(f"Tag 'Nome' adicionada ao recurso: {resource_arn} com o valor '{resource_name}'")
+        print(f"Tag 'Nome' adicionada ao recurso: {resource_arn} com o valor '{resource_name}'\n")
     except ClientError as e:
-        print(f"Erro ao adicionar tag 'Nome' ao recurso {resource_arn}: {e}")
+        print(f"Erro ao adicionar tag 'Nome' ao recurso {resource_arn}: {e}\n")
 
 def list_resources_and_check_tags(session):
     """
@@ -76,12 +76,12 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
-                print(f"Vai iniciar o recurso:\n [{resource_arn}].")
+                print(f"* Vai iniciar o recurso:\n [{resource_arn}].")
                 keyboard.read_event()
 
                 # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
                 if keyboard.is_pressed('esc'):
-                    print("Encerrando o programa.")
+                    print("< Encerrando o programa.")
                     return False
                 
                 tags = resource.get('Tags', [])
@@ -90,7 +90,7 @@ def list_resources_and_check_tags(session):
                 tag_revisao = next((tag for tag in tags if tag['Key'] == 'revisao' and tag['Value'] == 'false'), None)
 
                 if tag_revisao:
-                    print(f"Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'false'.")
+                    print(f"   1) Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'false'.\n")
                     # Verificar se a tag 'Nome' já existe
                     tag_nome = next((tag for tag in tags if tag['Key'] == 'Nome'), None)
 
@@ -100,13 +100,12 @@ def list_resources_and_check_tags(session):
                         
                         if resource_name:
                             # Adicionar a tag 'Nome' ao recurso
-                            print(f"Nome do recurso ARN {resource_name}.")
-                            print(f"Tenta adicionar a tag 'Nome' ao recurso ARN {resource_arn}.")
+                            print(f"   2) Tenta adicionar a tag 'Nome' ao recurso ARN {resource_arn}.")
                             add_name_tag(resource_arn, resource_name, tagging_client)
                         else:
-                            entrada = input("Não foi possível adicionar um nome.\n"
-                                            "Digite um nome, vazio para próximo ou\n"
-                                            "'sair' para encerrear: ")
+                            entrada = input("   3) Não foi possível adicionar um nome.\n"
+                                            "      Digite um nome, vazio para próximo ou "
+                                            "      'sair' para encerrear:\n ")
                             if bool(entrada):
                                 if entrada.lower() == 'sair':
                                     return False

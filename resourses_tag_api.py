@@ -72,9 +72,13 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
-                print(f"Vai iniciar o recurso com ARN {resource_arn}.")
+                print(f"Vai iniciar o recurso:\n ***{resource}***.")
                 keyboard.read_event()
 
+                # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
+                if keyboard.is_pressed('esc'):
+                    print("Encerrando o programa.")
+                    return False
                 
                 tags = resource.get('Tags', [])
 

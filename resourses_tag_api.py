@@ -11,6 +11,7 @@ load_dotenv()
 # Obter as credenciais e a região a partir do arquivo .env
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_SESSION_TOKEN = os.getenv('AWS_SESSION_TOKEN')
 AWS_REGION = os.getenv('AWS_REGION')
 
 # Inicializar cliente boto3 com as credenciais e região do .env
@@ -19,6 +20,7 @@ def initialize_session():
         session = boto3.Session(
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            aws_session_token=AWS_SESSION_TOKEN,
             region_name=AWS_REGION
         )
         return session
@@ -106,6 +108,7 @@ if __name__ == "__main__":
     
     print(f"AWS_ACCESS_KEY_ID = {AWS_ACCESS_KEY_ID}")
     print(f"AWS_SECRET_ACCESS_KEY = {AWS_SECRET_ACCESS_KEY}")
+    print(f"AWS_SESSION_TOKEN = {AWS_SESSION_TOKEN}")
     print(f"AWS_REGION = {AWS_REGION}")
     
     if session:

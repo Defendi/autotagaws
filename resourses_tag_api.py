@@ -1,3 +1,4 @@
+import re
 import os
 import boto3
 import keyboard
@@ -37,12 +38,13 @@ def get_resource(session, arn):
     Tenta descrever o recurso com base no ARN. Exemplo: EC2, ACM, etc.
     """
     try:
+        Description = ""
         if 'acm' in arn:
             cert = get_acm(session, arn)
-            return cert['Certificate'].get('DomainName', 'Descrição indisponível')
+            Description = cert['Certificate'].get('DomainName', 'Descrição indisponível')
         else:
             print(f"Recurso desconhecido:\n[{arn}]\n")
-        return False
+        return re.sub(r'[^a-zA-Z0-9]', '', Description)
     except ClientError as e:
         print(f"Erro ao descrever o recurso {arn}: {e}\n")
         return False

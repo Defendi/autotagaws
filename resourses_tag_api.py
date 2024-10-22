@@ -34,6 +34,10 @@ def get_acm(session,arn):
     client = session.client('acm')  # Cliente para descrever certificados
     return client.describe_certificate(CertificateArn=arn)
 
+def get_backup(session,arn):
+    client = session.client('backup')  # Cliente para descrever certificados
+    return client.describe_protected_resource(ResourceArn=arn)
+
 def get_resource(session, arn):
     """
     Tenta descrever o recurso com base no ARN. Exemplo: EC2, ACM, etc.
@@ -41,8 +45,11 @@ def get_resource(session, arn):
     try:
         Description = ""
         if 'acm' in arn:
-            cert = get_acm(session, arn)
-            Description = cert['Certificate'].get('DomainName', 'Descrição indisponível')
+            recurso = get_acm(session, arn)
+            Description = recurso['Certificate'].get('DomainName', 'Descrição indisponível')
+        elif 'backup' in arn:
+            recurso = get_backup(session, arn)
+            Description = recurso.get('ResourceName',False)
         else:
             print(f"Recurso desconhecido:\n[{arn}]\n")
         return re.sub(r'[^a-zA-Z0-9._]', '', Description)
@@ -52,7 +59,7 @@ def get_resource(session, arn):
 
 def add_name_tag(resource_arn, resource_name, tagging_client):
     """
-    Adiciona a tag "Nome" ao recurso com a descrição fornecida.
+    Adiciona a tag "Name" ao recurso com a descrição fornecida.
     """
     try:
         res = tagging_client.tag_resources(
@@ -67,12 +74,12 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
             print(f"Falhou ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
             return False
     except ClientError as e:
-        print(f"Erro ao adicionar tag 'Nome' ao recurso {resource_arn}: {e}\n")
+        print(f"Erro ao adicionar tag 'Name' ao recurso {resource_arn}: {e}\n")
 
 def list_resources_and_check_tags(session):
     """
     Lista todos os recursos da região e verifica as tags.
-    Se encontrar a tag 'revisao' com o valor 'false', adiciona a tag 'Nome' se não existir.
+    Se encontrar a tag 'revisao' com o valor 'false', adiciona a tag 'Name' se não existir.
     """
     try:
         # Inicializar o cliente resourcegroupstaggingapi para listar os recursos com tags
@@ -100,20 +107,20 @@ def list_resources_and_check_tags(session):
 
                 if tag_revisao:
                     print(f"   1) Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'false'.\n")
-                    # Verificar se a tag 'Nome' já existe
-                    tag_nome = next((tag for tag in tags if tag['Key'] == 'Nome'), None)
+                    # Verificar se a tag 'Name' já existe
+                    tag_nome = next((tag for tag in tags if tag['Key'] == 'Name'), None)
 
                     if not tag_nome:
-                        # Tentar descrever o recurso se não houver a tag 'Nome'
+                        # Tentar descrever o recurso se não houver a tag 'Name'
                         resource_name = get_resource(session, resource_arn)
                         
                         if resource_name:
-                            # Adicionar a tag 'Nome' ao recurso
-                            print(f"   2) Tenta adicionar a tag 'Nome' ao recurso ARN {resource_arn}.")
+                            # Adicionar a tag 'Name' ao recurso
+                            print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso ARN {resource_arn}.")
                             add_name_tag(resource_arn, resource_name, tagging_client)
                         else:
-                            entrada = input("   3) Não foi possível adicionar um nome.\n"
-                                            "      Digite um nome, vazio para próximo ou "
+                            entrada = input("   3) Não foi possível adicionar um Name.\n"
+                                            "      Digite um Name, vazio para próximo ou "
                                             "      'sair' para encerrear:\n ")
                             if bool(entrada):
                                 if entrada.lower() == 'sair':
@@ -121,7 +128,7 @@ def list_resources_and_check_tags(session):
                                 else:
                                     add_name_tag(resource_arn, entrada, tagging_client)
                     else:
-                        print(f"O recurso {resource_arn} já possui a tag 'Nome'.")
+                        print(f"O recurso {resource_arn} já possui a tag 'Name'.")
                 else:
                     print(f"O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.")
     except (ClientError, NoCredentialsError) as e:

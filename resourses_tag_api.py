@@ -1,11 +1,12 @@
-import re
 import os
-import boto3
-import keyboard
-
-from dotenv import load_dotenv
-from botocore.exceptions import NoCredentialsError, ClientError
 from pickle import TRUE
+import re
+import time
+
+import boto3
+from botocore.exceptions import NoCredentialsError, ClientError
+from dotenv import load_dotenv
+import keyboard
 
 # Carregar as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -75,6 +76,7 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
             return False
     except ClientError as e:
         print(f"Erro ao adicionar tag 'Name' ao recurso {resource_arn}: {e}\n")
+        return False
 
 def list_resources_and_check_tags(session):
     """
@@ -92,13 +94,14 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
-                print(f"* Vai iniciar o recurso:\n [{resource_arn}].")
-                keyboard.read_event()
-
-                # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
-                if keyboard.is_pressed('esc'):
-                    print("< Encerrando o programa.")
-                    return False
+                print(f"* Vai iniciar o recurso:\n [{resource_arn}].\n")
+                # keyboard.read_event()
+                #
+                # # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
+                # if keyboard.is_pressed('esc'):
+                #     print("< Encerrando o programa.\n")
+                #     return True
+                time.sleep(1) 
                 
                 tags = resource.get('Tags', [])
 
@@ -106,7 +109,7 @@ def list_resources_and_check_tags(session):
                 tag_revisao = next((tag for tag in tags if tag['Key'] == 'revisao' and tag['Value'] == 'false'), None)
 
                 if tag_revisao:
-                    print(f"   1) Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'false'.\n")
+                    print(f"   1) Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'FALSE'.\n")
                     # Verificar se a tag 'Name' já existe
                     tag_nome = next((tag for tag in tags if tag['Key'] == 'Name'), None)
 
@@ -116,7 +119,7 @@ def list_resources_and_check_tags(session):
                         
                         if resource_name:
                             # Adicionar a tag 'Name' ao recurso
-                            print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso ARN {resource_arn}.")
+                            print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso ARN {resource_arn}.\n")
                             add_name_tag(resource_arn, resource_name, tagging_client)
                         else:
                             entrada = input("   3) Não foi possível adicionar um Name.\n"
@@ -128,9 +131,9 @@ def list_resources_and_check_tags(session):
                                 else:
                                     add_name_tag(resource_arn, entrada, tagging_client)
                     else:
-                        print(f"O recurso {resource_arn} já possui a tag 'Name'.")
+                        print(f"O recurso {resource_arn} já possui a tag 'Name'.\n")
                 else:
-                    print(f"O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.")
+                    print(f"O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.\n")
     except (ClientError, NoCredentialsError) as e:
         print(f"Erro ao listar os recursos: {e}")
 

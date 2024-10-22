@@ -28,7 +28,7 @@ def initialize_session():
         )
         return session
     except NoCredentialsError as e:
-        print(f"Erro ao carregar credenciais da AWS: {e}\n")
+        print(f"   Erro ao carregar credenciais da AWS: {e}\n")
         return None
 
 def get_acm(session,arn):
@@ -60,11 +60,13 @@ def get_resource(session, arn):
             trailList = recurso.get('trailList',[])
             if bool(trailList):
                 Description=trailList[0]['name']
+        elif 'ec2' in arn and 'network-interface' in arn:
+            pass
         else:
-            print(f"Recurso desconhecido:\n[{arn}]\n")
+            print(f"   Recurso desconhecido:\n[{arn}]\n")
         return re.sub(r'[^a-zA-Z0-9._]', '', Description)
     except ClientError as e:
-        print(f"Erro ao descrever o recurso {arn}: {e}\n")
+        print(f"   Erro ao descrever o recurso {arn}: {e}\n")
         return False
 
 def add_name_tag(resource_arn, resource_name, tagging_client):
@@ -78,13 +80,13 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
         )
         fail = res.get('FailedResourcesMap',False)
         if not bool(fail):
-            print(f"Adicionou a Tag 'Name' ao recurso ARN {resource_arn}\n")
+            print(f"   Adicionou a Tag 'Name' ao recurso ARN {resource_arn}\n")
             return True
         else:
-            print(f"Falhou ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
+            print(f"   Falhou ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
             return False
     except ClientError as e:
-        print(f"Erro ao adicionar tag 'Name' ao recurso {resource_arn}: {e}\n")
+        print(f"   Erro ao adicionar tag 'Name' ao recurso {resource_arn}: {e}\n")
         return False
 
 def list_resources_and_check_tags(session):
@@ -103,7 +105,7 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
-                print(f"* Vai iniciar o recurso:\n [{resource_arn}].\n")
+                print(f"* Vai taguear o recurso:\n [{resource_arn}].\n")
                 # keyboard.read_event()
                 #
                 # # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
@@ -140,11 +142,12 @@ def list_resources_and_check_tags(session):
                                 else:
                                     add_name_tag(resource_arn, entrada, tagging_client)
                     else:
-                        print(f"O recurso {resource_arn} já possui a tag 'Name'.\n")
+                        print(f"   O recurso {resource_arn} já possui a tag 'Name'.\n")
                 else:
-                    print(f"O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.\n")
+                    print(f"   O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.\n")
+                print("************************************************************************************\n")
     except (ClientError, NoCredentialsError) as e:
-        print(f"Erro ao listar os recursos: {e}")
+        print(f"   Erro ao listar os recursos: {e}")
 
 if __name__ == "__main__":
     # Inicializa a sessão boto3 usando as credenciais do arquivo .env

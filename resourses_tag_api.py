@@ -39,6 +39,10 @@ def get_backup(session,arn):
     client = session.client('backup')  # Cliente para descrever certificados
     return client.describe_protected_resource(ResourceArn=arn)
 
+def get_cloudtrail(session,arn):
+    client = session.client('cloudtrail')  # Cliente para descrever certificados
+    return client.describe_trails(trailNameList=arn)
+
 def get_resource(session, arn):
     """
     Tenta descrever o recurso com base no ARN. Exemplo: EC2, ACM, etc.
@@ -51,6 +55,11 @@ def get_resource(session, arn):
         elif 'backup' in arn:
             recurso = get_backup(session, arn)
             Description = recurso.get('ResourceName',False)
+        elif 'cloudtrail' in arn:
+            recurso = get_cloudtrail(session, arn)
+            trailList = recurso.get('trailList',[])
+            if bool(trailList):
+                Description=trailList[0]['name']
         else:
             print(f"Recurso desconhecido:\n[{arn}]\n")
         return re.sub(r'[^a-zA-Z0-9._]', '', Description)

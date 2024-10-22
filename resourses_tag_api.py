@@ -41,7 +41,7 @@ def get_backup(session,arn):
 
 def get_cloudtrail(session,arn):
     client = session.client('cloudtrail')  # Cliente para descrever certificados
-    return client.describe_trails(trailNameList=arn)
+    return client.describe_trails(trailNameList=[arn])
 
 def get_resource(session, arn):
     """

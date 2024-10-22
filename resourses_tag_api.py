@@ -84,6 +84,7 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
             return True
         else:
             print(f"   Falhou ao adicionar a Tag 'Name' ao recurso ARN {resource_arn}:\n{res}\n")
+            entrada = input("   Pressione ENTRA para continuar")
             return False
     except ClientError as e:
         print(f"   Erro ao adicionar tag 'Name' ao recurso {resource_arn}: {e}\n")
@@ -105,7 +106,7 @@ def list_resources_and_check_tags(session):
 
             for resource in resource_tag_mappings:
                 resource_arn = resource.get('ResourceARN')
-                print(f"* Vai taguear o recurso:\n [{resource_arn}].\n")
+                print(f"* Vai taguear o recurso:\n   {resource_arn}\n")
                 # keyboard.read_event()
                 #
                 # # Verifica se a tecla 'esc' foi pressionada para encerrar o loop
@@ -120,7 +121,7 @@ def list_resources_and_check_tags(session):
                 tag_revisao = next((tag for tag in tags if tag['Key'] == 'revisao' and tag['Value'] == 'false'), None)
 
                 if tag_revisao:
-                    print(f"   1) Recurso com ARN {resource_arn} tem a tag 'revisao' com valor 'FALSE'.\n")
+                    print(f"   1) Recurso tem a tag 'revisao' com valor 'FALSE'.\n")
                     # Verificar se a tag 'Name' já existe
                     tag_nome = next((tag for tag in tags if tag['Key'] == 'Name'), None)
 
@@ -130,7 +131,7 @@ def list_resources_and_check_tags(session):
                         
                         if resource_name:
                             # Adicionar a tag 'Name' ao recurso
-                            print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso ARN {resource_arn}.\n")
+                            print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso.\n")
                             add_name_tag(resource_arn, resource_name, tagging_client)
                         else:
                             entrada = input("   3) Não foi possível adicionar um Name.\n"
@@ -142,9 +143,9 @@ def list_resources_and_check_tags(session):
                                 else:
                                     add_name_tag(resource_arn, entrada, tagging_client)
                     else:
-                        print(f"   O recurso {resource_arn} já possui a tag 'Name'.\n")
+                        print(f"   O recurso já possui a tag 'Name'.\n")
                 else:
-                    print(f"   O recurso {resource_arn} não possui a tag 'revisao' com valor 'false'.\n")
+                    print(f"   O recurso não possui a tag 'revisao' com valor 'false'.\n")
                 print("************************************************************************************\n")
     except (ClientError, NoCredentialsError) as e:
         print(f"   Erro ao listar os recursos: {e}")

@@ -1,5 +1,4 @@
 import os
-from pickle import TRUE
 import re
 import time
 
@@ -69,14 +68,14 @@ def get_resource(session, arn):
         print(f"   Erro ao descrever o recurso {arn}: {e}\n")
         return False
 
-def add_name_tag(resource_arn, resource_name, tagging_client):
+def add_name_tag(resource_arn, tag_name, resource_name, tagging_client):
     """
     Adiciona a tag "Name" ao recurso com a descrição fornecida.
     """
     try:
         res = tagging_client.tag_resources(
             ResourceARNList=[resource_arn],
-            Tags={'Name': resource_name}
+            Tags={tag_name: resource_name}
         )
         fail = res.get('FailedResourcesMap',False)
         if not bool(fail):
@@ -90,6 +89,63 @@ def add_name_tag(resource_arn, resource_name, tagging_client):
         print(f"   Erro ao adicionar tag 'Name' ao recurso {resource_arn}: {e}\n")
         return False
 
+def get_ie(valor: str):
+    
+    res = "geral-anima"
+    if 'ages' in valor:
+        res = 'ages'
+    elif 'bsp' in valor: 
+        res = 'ages'
+    elif 'centrouniversitariounifg' in valor: 
+        res = 'ages'
+    elif 'ebradi' in valor: 
+        res = 'ages'
+    elif 'fadergs' in valor: 
+        res = 'ages'
+    elif 'fapa' in valor: 
+        res = 'ages'
+    elif 'faseh' in valor: 
+        res = 'ages'
+    elif 'fpb' in valor: 
+        res = 'ages'
+    elif 'hsm' in valor: 
+        res = 'ages'
+    elif 'hsmu' in valor: 
+        res = 'ages'
+    elif 'ibmr' in valor: 
+        res = 'ages'
+    elif 'inspirali' in valor: 
+        res = 'ages'
+    elif 'lecordonbleu' in valor: 
+        res = 'ages'
+    elif 'mcampos' in valor: 
+        res = 'ages'
+    elif 'onelearning' in valor: 
+        res = 'ages'
+    elif 'uam' in valor or 'anhembi' in valor: 
+        res = 'ages'
+    elif 'una' in valor: 
+        res = 'ages'
+    elif 'unibh' in valor: 
+        res = 'ages'
+    elif 'unicuritiba' in valor: 
+        res = 'ages'
+    elif 'unifacs' in valor: 
+        res = 'ages'
+    elif 'unifg' in valor: 
+        res = 'ages'
+    elif 'uniritter' in valor: 
+        res = 'ages'
+    elif 'unisociesc' in valor: 
+        res = 'ages'
+    elif 'unisul' in valor: 
+        res = 'ages'
+    elif 'unp' in valor: 
+        res = 'ages'
+    elif 'usjt' in valor: 
+        res = 'ages'
+    return res
+    
 def list_resources_and_check_tags(session):
     """
     Lista todos os recursos da região e verifica as tags.
@@ -118,34 +174,52 @@ def list_resources_and_check_tags(session):
                 tags = resource.get('Tags', [])
 
                 # Verifica se o recurso tem a tag 'revisao' com o valor 'false'
-                tag_revisao = next((tag for tag in tags if tag['Key'] == 'revisao' and tag['Value'] == 'false'), None)
+                tag_name = next((tag for tag in tags if tag['Key'] == 'Name'), None)
 
-                if tag_revisao:
-                    print(f"   1) Recurso tem a tag 'revisao' com valor 'FALSE'.\n")
-                    # Verificar se a tag 'Name' já existe
-                    tag_nome = next((tag for tag in tags if tag['Key'] == 'Name'), None)
-
-                    if not tag_nome:
-                        # Tentar descrever o recurso se não houver a tag 'Name'
-                        resource_name = get_resource(session, resource_arn)
-                        
-                        if resource_name:
-                            # Adicionar a tag 'Name' ao recurso
-                            print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso.\n")
-                            add_name_tag(resource_arn, resource_name, tagging_client)
-                        else:
-                            entrada = input("   3) Não foi possível adicionar um Name.\n"
-                                            "      Digite um Name, vazio para próximo ou "
-                                            "      'sair' para encerrear:\n ")
-                            if bool(entrada):
-                                if entrada.lower() == 'sair':
-                                    return False
-                                else:
-                                    add_name_tag(resource_arn, entrada, tagging_client)
+                if not tag_name:
+                    # Tentar descrever o recurso se não houver a tag 'Name'
+                    resource_name = get_resource(session, resource_arn)
+                    
+                    if resource_name:
+                        # Adicionar a tag 'Name' ao recurso
+                        print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso.\n")
+                        add_name_tag(resource_arn, "Name", resource_name, tagging_client)
                     else:
-                        print(f"   O recurso já possui a tag 'Name'.\n")
+                        resource_name = input("   3) Não foi possível adicionar um Name.\n"
+                                              "      a) Digite um Nome para o recurso;\n"
+                                              "      b) Tecle enter vazio para não adicionar e ir ao próximo;\n"
+                                              "      c) Digite 'sair' para encerrear:\n ")
+                        if bool(resource_name):
+                            if resource_name.lower() == 'sair':
+                                return False
+                            else:
+                                print(f"   2) Tenta adicionar a tag 'Name' = {resource_name} ao recurso.\n")
+                                add_name_tag(resource_arn, "Name", resource_name, tagging_client)
                 else:
-                    print(f"   O recurso não possui a tag 'revisao' com valor 'false'.\n")
+                    resource_name = tag_name['Value']
+                if bool(resource_name):
+                    tag_ambiente    = next((tag for tag in tags if tag['Key'] == 'ambiente'), None)
+                    tag_squad       = next((tag for tag in tags if tag['Key'] == 'squad'), None)
+                    tag_area        = next((tag for tag in tags if tag['Key'] == 'area'), None)
+                    tag_servico     = next((tag for tag in tags if tag['Key'] == 'servico'), None)
+                    tag_produto     = next((tag for tag in tags if tag['Key'] == 'produto'), None)
+                    tag_projeto     = next((tag for tag in tags if tag['Key'] == 'Name'), None)
+                    tag_ie          = next((tag for tag in tags if tag['Key'] == 'instituicao-ensino' or tag['Key'] == 'ie'), None)
+                    tag_backup      = next((tag for tag in tags if tag['Key'] == 'Name'), None)
+                    tag_costcenter  = next((tag for tag in tags if tag['Key'] == 'Name'), None)
+                    tag_dynatrace   = next((tag for tag in tags if tag['Key'] == 'Name'), None)
+                    tag_revisao     = next((tag for tag in tags if tag['Key'] == 'Name'), None)
+                    if not bool(tag_ambiente):
+                        ambiente = "hml" if "hml" in resource_name else "prd"
+                    else:
+                        ambiente = tag_ambiente['Value']
+                    if not bool(tag_squad):
+                        squad = "graduacao"
+                        if 'pos' in resource_name:
+                            squad = "pos"
+                        elif 'ead' in resource_name:
+                            squad = "ead"
+                        
                 print("************************************************************************************\n")
     except (ClientError, NoCredentialsError) as e:
         print(f"   Erro ao listar os recursos: {e}")
